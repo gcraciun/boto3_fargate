@@ -2,6 +2,38 @@
 
 import boto3
 
+# If it does not exist create Cloudwatch LogGroup.
+# - Move from hardcoding to variable after testing.
+cw = boto3.client('logs')
+try:
+    loggroups = cw.describe_log_groups(logGroupNamePrefix='Fargate-Test')
+#    loggroups = cw.describe_log_groups()
+except:
+    print "Error getting log groups"
+    exit(1)
+
+LGs = [ x["logGroupName"] for x in loggroups["logGroups"]]
+
+lg_found = False # 2nd grade programming
+
+if len(LGs) > 0:
+    for temp in LGs:
+        if temp == 'Fargate-Test':
+            lg_found = True
+            print "found existing log group with the same name"
+            break
+
+if not lg_found:
+    print "proceeding with creation"
+    try:
+        newlg = cw.create_log_group(logGroupName='Fargate-Test')
+    except:
+        print "Error creating log group"
+        exit(1)
+
+print "\n\n\nExiting without running everything below"
+exit(0)
+
 # Get there first
 try:
     ec2 = boto3.resource('ec2')
@@ -19,6 +51,7 @@ try:
     AZs = [x["ZoneName"] for x in av_az["AvailabilityZones"]]
 except:
     print "Error getting AZ's"
+    exit(1)
 
 for x in AZs:
     print x
@@ -43,4 +76,7 @@ print subnet2.id
 
 # Get the ecs connection, create the cluster, don't forget "try"
 ecs = boto3.client('ecs')
-ecs.create_cluster(clusterName='GC-Test')
+try:
+    ecs.create_cluster(clusterName='GC-Test')
+except:
+    print "Error creating cluster"
