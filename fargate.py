@@ -1,6 +1,27 @@
 #!/usr/bin/env python
 
 import boto3
+import sys
+import json
+
+try:
+    inputf = sys.argv[1]
+except:
+    print "Error, no input file"
+    exit(1)
+
+def read_data(ifile):
+    try:
+        with open(ifile) as jsonfile:
+            data = json.load(jsonfile)
+            return data
+    except:
+        print "Error, could not open file"
+        exit(1)
+
+task_data = read_data(inputf)
+
+print task_data
 
 # If it does not exist create Cloudwatch LogGroup.
 # - Move from hardcoding to variable after testing.
