@@ -52,23 +52,23 @@ if not lg_found:
         print "Error creating log group"
         exit(1)
 
-print "\n\n\nExiting without running everything below"
-exit(0)
+#print "\n\n\nExiting without running everything below"
+#exit(0)
 
 # Get there first
 try:
-    ec2 = boto3.resource('ec2')
+    ec2 = boto3.client('ec2')
     vpc = ec2.create_vpc(CidrBlock='172.21.0.0/16')
 except:
     print "Error creating VPC, send me to http://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling"
     exit(1)
-print vpc.id
+vpc_id = vpc["Vpc"]["VpcId"]
+print vpc_id
 
 
 # Get available AZ's
 try:
-    ec2_cl = boto3.client('ec2')
-    av_az = ec2_cl.describe_availability_zones()
+    av_az = ec2.describe_availability_zones()
     AZs = [x["ZoneName"] for x in av_az["AvailabilityZones"]]
 except:
     print "Error getting AZ's"
@@ -80,20 +80,16 @@ for x in AZs:
 AZs.reverse()
 
 
-# Create subnet in 2 ways, so many choices...
-# EC2.Client.create_subnet
-# EC2.Vpc.create_subnet
-
 try:
     print "Subnet 1 going"
-    subnet1 = vpc.create_subnet(CidrBlock='172.21.1.0/24', AvailabilityZone=AZs.pop())
+    subnet1 = ec2.create_subnet(CidrBlock='172.21.1.0/24', VpcId=vpc_id, AvailabilityZone=AZs.pop())
     print "Subnet 2 going"
-    subnet2 = ec2.create_subnet(CidrBlock='172.21.2.0/24', VpcId=vpc.id, AvailabilityZone=AZs.pop())
+    subnet2 = ec2.create_subnet(CidrBlock='172.21.2.0/24', VpcId=vpc_id, AvailabilityZone=AZs.pop())
 except:
     print "Error creating subnets"
     exit(1)
-print subnet1.id
-print subnet2.id
+print subnet1["Subnet"]["SubnetId"]
+print subnet2["Subnet"]["SubnetId"]
 
 # Get the ecs connection, create the cluster, don't forget "try"
 ecs = boto3.client('ecs')
