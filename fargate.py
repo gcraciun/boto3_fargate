@@ -28,27 +28,12 @@ task_data = read_data(inputf)
 # - Move from hardcoding to variable after testing.
 cw = boto3.client('logs')
 try:
-    loggroups = cw.describe_log_groups(logGroupNamePrefix='Fargate-Test')
-#    loggroups = cw.describe_log_groups()
+    cw.create_log_group(logGroupName='Fargate-Test')
 except ClientError as e:
-    print e
-    exit(1)
-
-LGs = [ x["logGroupName"] for x in loggroups["logGroups"]]
-
-lg_found = False # 2nd grade programming
-if len(LGs) > 0:
-    for temp in LGs:
-        if temp == 'Fargate-Test':
-            lg_found = True
-            print "found existing log group with the same name"
-            break
-
-if not lg_found:
-    print "proceeding with creation"
-    try:
-        newlg = cw.create_log_group(logGroupName='Fargate-Test')
-    except ClientError as e:
+    if e.response["Error"]["Code"] == 'ResourceAlreadyExistsException':
+        print e.response["Error"]["Message"]
+        print "Skpping log group creation..."
+    else:
         print e
         exit(1)
 
