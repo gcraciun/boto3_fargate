@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import boto3
+import json
 from botocore.exceptions import ClientError
-
 
 class AWS_VPC(object):
 
@@ -100,8 +100,35 @@ class AWS_CWL(object):
                     print e
                     exit(1)
 
+class AWS_ECS(object):
+
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            self.ecs = kwargs["client"]
+            self.name = kwargs["name"]
+            try:
+                response = self.ecs.create_cluster(clusterName=self.name)
+            except ClientError as e:
+                print e
+                exit(1)
+            self.arn = response["cluster"]["clusterArn"]
+            
+
+def read_data(ifile):
+    try:
+        with open(ifile) as jsonfile:
+            data = json.load(jsonfile)
+            return data
+    except:
+        print "Error, could not open file"
+        exit(1)
+
 if __name__ == '__main__':
-    """
+
+    print "Do not run me"
+    exit(1)
+
+"""
     ptags = {'Key': 'Project' , 'Value' : 'FargateTesting'}
     vpc_cidr='172.22.0.0/16'
 
@@ -114,8 +141,4 @@ if __name__ == '__main__':
     subnet2_cidr='172.22.2.0/24'
     my_subnet1 = AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=my_vpc.id, CidrBlock=subnet1_cidr, AZ=my_vpc.AZs)
     my_subnet2 = AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=my_vpc.id, CidrBlock=subnet2_cidr, AZ=my_vpc.AZs)
-    """
-
-    print "Do not run me"
-    exit(1)
-
+"""

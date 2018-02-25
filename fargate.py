@@ -6,10 +6,10 @@ import json
 from botocore.exceptions import ClientError
 import mycore
 
-
-#project tags
+# Project resources tags
 ptags = {'Key': 'Project' , 'Value' : 'FargateTesting'}
 
+# Data about the resources to be created, stored in JSON format
 vpc_data = {
     "vpc_CidrBlock" : "172.22.0.0/16",
     "vpc_Subnets": [ 
@@ -17,58 +17,33 @@ vpc_data = {
             "sub1_CidrBlock" : "172.22.1.0/24",
             "sub2_CidrBlock" : "172.22.2.0/24"
         }
-    ]
+    ],
+    "cwl_name" : "Fargate-Test",
+    "ecs_name" : "Fargate-Test"
 }
 
+# Read JSON file containing the Fargate Task data
 try:
     inputf = sys.argv[1]
 except:
     print "Error, no input file"
     exit(1)
 
-def read_data(ifile):
-    try:
-        with open(ifile) as jsonfile:
-            data = json.load(jsonfile)
-            return data
-    except:
-        print "Error, could not open file"
-        exit(1)
+task_data = mycore.read_data(inputf)
 
-task_data = read_data(inputf)
 
-#print task_data
-
-# If it does not exist create Cloudwatch LogGroup.
-# - Move from hardcoding to variable after testing.
-cw = boto3.client('logs')
+# Create Boto3 clients
 try:
-    cw.create_log_group(
-        logGroupName='Fargate-Test',
-        tags = ptags,
-        )
-except ClientError as e:
-    if e.response["Error"]["Code"] == 'ResourceAlreadyExistsException':
-        print e.response["Error"]["Message"]
-        print "Skpping log group creation..."
-    else:
-        print e
-        exit(1)
-
-try:
+    cw = boto3.client('logs')
     ec2 = boto3.client('ec2')
+    ecs = boto3.client('ecs')
 except ClientError as e:
     print e
     exit(1)
 
+# Create the necessary resources
+fg_cwl = mycore.AWS_CWL(client=cw, tag=ptags, name=vpc_data["cwl_name"])
 fg_vpc = mycore.AWS_VPC(client=ec2, tag=ptags, CidrBlock=vpc_data["vpc_CidrBlock"])
 fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub1_CidrBlock"], AZ=fg_vpc.AZs)
 fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub2_CidrBlock"], AZ=fg_vpc.AZs)
-
-# Get the ecs connection, create the cluster, don't forget "try"
-ecs = boto3.client('ecs')
-try:
-    ecs.create_cluster(clusterName='GC-Test')
-except ClientError as e:
-    print e
-    exit(1)
+fg_ecs = mycore.AWS_ECS(client=ecs, name=vpc_data["ecs_name"])
