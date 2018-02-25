@@ -1,8 +1,11 @@
+- use logger
+
+
+
+DONE... well almost
 - treat exceptions better, see http://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling
 except ClientError as e:
     print e / e.response / e.message
-
 - add resource tagging
-- use logger
 - move to variable instead of hardcoding the logGroup name
 - move VPC and subnets CidrBlock to variables?? needed?
