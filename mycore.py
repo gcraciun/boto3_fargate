@@ -29,7 +29,7 @@ class AWS_VPC(object):
         try:
             self.tag_r = self.ec2.create_tags(
                 Resources=[self.id],
-                Tags=[self.tag])
+                Tags=self.tag)
         except ClientError as e:
             print e
             exit(1)
@@ -69,7 +69,7 @@ class AWS_VPC_SUBNET(object):
         try:
             self.tag_r = self.ec2.create_tags(
                 Resources=[self.id],
-                Tags=[self.tag])
+                Tags=self.tag)
         except ClientError as e:
             print e
             exit(1)
@@ -99,7 +99,7 @@ class AWS_CWL(object):
                 else:
                     print e
                     exit(1)
-
+    
 class AWS_ECS(object):
 
     def __init__(self, **kwargs):

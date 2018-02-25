@@ -6,16 +6,20 @@ import json
 from botocore.exceptions import ClientError
 import mycore
 
-# Project resources tags
-ptags = {'Key': 'Project' , 'Value' : 'FargateTesting'}
-
 # Data about the resources to be created, stored in JSON format
+# including resource tags
 vpc_data = {
     "vpc_CidrBlock" : "172.22.0.0/16",
-    "vpc_Subnets": [ 
+    "vpc_Subnets" : [ 
         { 
             "sub1_CidrBlock" : "172.22.1.0/24",
             "sub2_CidrBlock" : "172.22.2.0/24"
+        }
+    ],
+    "ptags" : [
+        {
+            "Key" : "Project",
+            "Value" : "FargateTesting"
         }
     ],
     "cwl_name" : "Fargate-Test",
@@ -42,8 +46,8 @@ except ClientError as e:
     exit(1)
 
 # Create the necessary resources
-fg_cwl = mycore.AWS_CWL(client=cw, tag=ptags, name=vpc_data["cwl_name"])
-fg_vpc = mycore.AWS_VPC(client=ec2, tag=ptags, CidrBlock=vpc_data["vpc_CidrBlock"])
-fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub1_CidrBlock"], AZ=fg_vpc.AZs)
-fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub2_CidrBlock"], AZ=fg_vpc.AZs)
+fg_cwl = mycore.AWS_CWL(client=cw, tag=vpc_data["ptags"][0], name=vpc_data["cwl_name"])
+fg_vpc = mycore.AWS_VPC(client=ec2, tag=vpc_data["ptags"], CidrBlock=vpc_data["vpc_CidrBlock"])
+fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub1_CidrBlock"], AZ=fg_vpc.AZs)
+fg_sub2 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub2_CidrBlock"], AZ=fg_vpc.AZs)
 fg_ecs = mycore.AWS_ECS(client=ecs, name=vpc_data["ecs_name"])
