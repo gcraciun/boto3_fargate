@@ -1,6 +1,6 @@
+- get latest task definition for the current task and compare it to ours \
+	if they're the same skip and use the latest
 - use logger
-
-
 
 DONE... well almost
 - treat exceptions better, see http://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling

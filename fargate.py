@@ -51,3 +51,4 @@ fg_vpc = mycore.AWS_VPC(client=ec2, tag=vpc_data["ptags"], CidrBlock=vpc_data["v
 fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub1_CidrBlock"], AZ=fg_vpc.AZs)
 fg_sub2 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub2_CidrBlock"], AZ=fg_vpc.AZs)
 fg_ecs = mycore.AWS_ECS(client=ecs, name=vpc_data["ecs_name"])
+fg_tsk_def = mycore.AWS_ECS_TSK_DEF(client=ecs, data=task_data)

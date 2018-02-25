@@ -4,7 +4,6 @@ import json
 from botocore.exceptions import ClientError
 
 class AWS_VPC(object):
-
     def __init__(self, **kwargs):
         if kwargs is not None:
             self.ec2 = kwargs["client"]
@@ -21,7 +20,6 @@ class AWS_VPC(object):
         self.id = self.vpc["Vpc"]["VpcId"]
         waiter = self.ec2.get_waiter('vpc_available')
         waiter.wait(VpcIds=[self.id])
-        
         self.__tag(self.tag)
         self.__getAZ()
 
@@ -45,7 +43,6 @@ class AWS_VPC(object):
 
 
 class AWS_VPC_SUBNET(object):
-
     def __init__(self, **kwargs):
         if kwargs is not None:
             self.vpc_id = kwargs["vpc_id"]
@@ -61,7 +58,6 @@ class AWS_VPC_SUBNET(object):
             self.id = self.response["Subnet"]["SubnetId"]
             waiter = self.ec2.get_waiter('subnet_available')
             waiter.wait(SubnetIds=[self.id])
-            
             self.__tag(self.tag)
             self.__map_pub()
                 
@@ -84,7 +80,6 @@ class AWS_VPC_SUBNET(object):
             exit(1)
 
 class AWS_CWL(object):
-
     def __init__(self, **kwargs):
         if kwargs is not None:
             self.cw = kwargs["client"]
@@ -101,7 +96,6 @@ class AWS_CWL(object):
                     exit(1)
     
 class AWS_ECS(object):
-
     def __init__(self, **kwargs):
         if kwargs is not None:
             self.ecs = kwargs["client"]
@@ -113,6 +107,23 @@ class AWS_ECS(object):
                 exit(1)
             self.arn = response["cluster"]["clusterArn"]
             
+class AWS_ECS_TSK_DEF(object):
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            self.ecs = kwargs["client"]
+            self.data = kwargs["data"]
+            try:
+                response = self.ecs.register_task_definition(family = self.data["family"],
+                                                                taskRoleArn = self.data["taskRoleArn"],
+                                                                executionRoleArn = self.data["executionRoleArn"],
+                                                                networkMode = self.data["networkMode"],
+                                                                containerDefinitions = self.data["containerDefinitions"],
+                                                                cpu = self.data["cpu"],
+                                                                memory = self.data["memory"],
+                                                                requiresCompatibilities = self.data["requiresCompatibilities"])
+            except ClientError as e:
+                print e
+                exit(1)
 
 def read_data(ifile):
     try:
@@ -122,6 +133,7 @@ def read_data(ifile):
     except:
         print "Error, could not open file"
         exit(1)
+
 
 if __name__ == '__main__':
 
