@@ -4,6 +4,21 @@ import boto3
 import sys
 import json
 from botocore.exceptions import ClientError
+import mycore
+
+
+#project tags
+ptags = {'Key': 'Project' , 'Value' : 'FargateTesting'}
+
+vpc_data = {
+    "vpc_CidrBlock" : "172.22.0.0/16",
+    "vpc_Subnets": [ 
+        { 
+            "sub1_CidrBlock" : "172.22.1.0/24",
+            "sub2_CidrBlock" : "172.22.2.0/24"
+        }
+    ]
+}
 
 try:
     inputf = sys.argv[1]
@@ -28,7 +43,10 @@ task_data = read_data(inputf)
 # - Move from hardcoding to variable after testing.
 cw = boto3.client('logs')
 try:
-    cw.create_log_group(logGroupName='Fargate-Test')
+    cw.create_log_group(
+        logGroupName='Fargate-Test',
+        tags = ptags,
+        )
 except ClientError as e:
     if e.response["Error"]["Code"] == 'ResourceAlreadyExistsException':
         print e.response["Error"]["Message"]
@@ -39,38 +57,13 @@ except ClientError as e:
 
 try:
     ec2 = boto3.client('ec2')
-    vpc = ec2.create_vpc(CidrBlock='172.21.0.0/16')
 except ClientError as e:
     print e
     exit(1)
 
-vpc_id = vpc["Vpc"]["VpcId"]
-print vpc_id
-
-
-# Get available AZ's
-try:
-    av_az = ec2.describe_availability_zones()
-except ClientError as e:
-    print e
-    exit(1)
-
-AZs = [x["ZoneName"] for x in av_az["AvailabilityZones"]]
-for x in AZs:
-    print x
-AZs.reverse() # ADD, I need to push in alphabetical order A, B, C, etc
-
-try:
-    print "Subnet 1 going"
-    subnet1 = ec2.create_subnet(CidrBlock='172.21.1.0/24', VpcId=vpc_id, AvailabilityZone=AZs.pop())
-    print "Subnet 2 going"
-    subnet2 = ec2.create_subnet(CidrBlock='172.21.2.0/24', VpcId=vpc_id, AvailabilityZone=AZs.pop())
-except ClientError as e:
-    print e
-    exit(1)
-
-print subnet1["Subnet"]["SubnetId"]
-print subnet2["Subnet"]["SubnetId"]
+fg_vpc = mycore.AWS_VPC(client=ec2, tag=ptags, CidrBlock=vpc_data["vpc_CidrBlock"])
+fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub1_CidrBlock"], AZ=fg_vpc.AZs)
+fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=ptags, vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub2_CidrBlock"], AZ=fg_vpc.AZs)
 
 # Get the ecs connection, create the cluster, don't forget "try"
 ecs = boto3.client('ecs')

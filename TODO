@@ -2,6 +2,7 @@
 except ClientError as e:
     print e / e.response / e.message
 
+- add resource tagging
 - use logger
 - move to variable instead of hardcoding the logGroup name
 - move VPC and subnets CidrBlock to variables?? needed?
