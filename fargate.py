@@ -52,3 +52,18 @@ fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc
 fg_sub2 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub2_CidrBlock"], AZ=fg_vpc.AZs)
 fg_ecs = mycore.AWS_ECS(client=ecs, name=vpc_data["ecs_name"])
 fg_tsk_def = mycore.AWS_ECS_TSK_DEF(client=ecs, data=task_data)
+
+
+netconfig_dict = {
+                    "awsvpcConfiguration" : {
+                        "subnets" : [ fg_sub1.id, fg_sub2.id],
+                        "assignPublicIp" : "ENABLED"
+                    }
+}
+
+fg_tsk_run = mycore.AWS_ECS_TSK_RUN(client=ecs,
+                                        cluster=fg_ecs.arn,
+                                        taskDefinition=fg_tsk_def.arn,
+                                        count=1,
+                                        launchType="FARGATE",
+                                        networkConfiguration=netconfig_dict)

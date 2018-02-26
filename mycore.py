@@ -124,6 +124,27 @@ class AWS_ECS_TSK_DEF(object):
             except ClientError as e:
                 print e
                 exit(1)
+            self.arn = response["taskDefinition"]["taskDefinitionArn"]
+
+class AWS_ECS_TSK_RUN(object):
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            self.ecs = kwargs["client"]
+            self.cluster = kwargs["cluster"]
+            self.taskDefinition = kwargs["taskDefinition"]
+            self.count = kwargs["count"]
+            self.launchType = kwargs["launchType"]
+            self.networkConfiguration = kwargs["networkConfiguration"]
+            try:
+                response = self.ecs.run_task(cluster = self.cluster,
+                                                taskDefinition = self.taskDefinition,
+                                                count = self.count,
+                                                launchType = self.launchType,
+                                                networkConfiguration = self.networkConfiguration)
+            except ClientError as e:
+                print e
+                exit(1)
+            self.arn = response["tasks"][0]["taskArn"]
 
 def read_data(ifile):
     try:
