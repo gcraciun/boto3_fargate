@@ -79,6 +79,86 @@ class AWS_VPC_SUBNET(object):
             print e
             exit(1)
 
+class AWS_VPC_IGW(object):
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            self.vpc_id = kwargs["vpc_id"]
+            self.ec2 = kwargs["client"]
+            self.tag = kwargs["tag"]
+            try:
+                self.response = self.ec2.create_internet_gateway(DryRun=False)
+            except ClientError as e:
+                print e
+                exit(1)
+            self.id = self.response["InternetGateway"]["InternetGatewayId"]
+            self.__tag(self.tag)
+            self.__attach(self.vpc_id)
+
+    def __tag(self, tag):
+        try:
+            self.tag_r = self.ec2.create_tags(
+                Resources=[self.id],
+                Tags=self.tag)
+        except ClientError as e:
+            print e
+            exit(1)
+
+    def __attach(self, vpc_id):
+        try:
+            response = self.ec2.attach_internet_gateway(InternetGatewayId=self.id, VpcId=self.vpc_id)
+        except ClientError as e:
+            print e
+            exit(1)
+
+class AWS_VPC_RTAB(object):
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            self.vpc_id = kwargs["vpc_id"]
+            self.ec2 = kwargs["client"]
+            self.tag = kwargs["tag"]
+            try:
+                self.response = self.ec2.create_route_table(VpcId=self.vpc_id)
+            except ClientError as e:
+                print e
+                exit(1)
+            self.id = self.response["RouteTable"]["RouteTableId"]
+            self.__tag(self.tag)
+
+    def __tag(self, tag):
+        try:
+            self.tag_r = self.ec2.create_tags(
+                Resources=[self.id],
+                Tags=self.tag)
+        except ClientError as e:
+            print e
+            exit(1)
+
+class AWS_VPC_RTASSOC(object):
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            self.ec2 = kwargs["client"]
+            self.rtid = kwargs["rtid"]
+            self.subid = kwargs["subid"]
+            try:
+                self.response = self.ec2.associate_route_table(RouteTableId=self.rtid, SubnetId=self.subid)
+            except ClientError as e:
+                print e
+                exit(1)
+            self.id = self.response["AssociationId"]
+
+class AWS_VPC_RTCRT(object):
+    def __init__(self, **kwargs):
+        if kwargs is not None:
+            self.ec2 = kwargs["client"]
+            self.dst_cidr = kwargs["dst_cidr"]
+            self.rtid = kwargs["rtid"]
+            self.igw_id = kwargs["igw_id"]
+            try:
+                self.response = self.ec2.create_route(DestinationCidrBlock=self.dst_cidr, GatewayId=self.igw_id, RouteTableId=self.rtid)
+            except ClientError as e:
+                print e
+                exit(1)
+
 class AWS_CWL(object):
     def __init__(self, **kwargs):
         if kwargs is not None:

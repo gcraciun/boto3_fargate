@@ -46,14 +46,35 @@ except ClientError as e:
     exit(1)
 
 # Create the necessary resources
+
+# Create Cloudwatch logs
 fg_cwl = mycore.AWS_CWL(client=cw, tag=vpc_data["ptags"][0], name=vpc_data["cwl_name"])
+
+# Create the VPC to which the container will be attached
 fg_vpc = mycore.AWS_VPC(client=ec2, tag=vpc_data["ptags"], CidrBlock=vpc_data["vpc_CidrBlock"])
+
+# Create a route table inside the VPC (don't use the main RT)
+fg_rtab = mycore.AWS_VPC_RTAB(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id)
+
+# Create 2 subnets and associate them to the previous route table
 fg_sub1 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub1_CidrBlock"], AZ=fg_vpc.AZs)
 fg_sub2 = mycore.AWS_VPC_SUBNET(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id, CidrBlock=vpc_data["vpc_Subnets"][0]["sub2_CidrBlock"], AZ=fg_vpc.AZs)
+fg_sub1rta = mycore.AWS_VPC_RTASSOC(client=ec2, rtid=fg_rtab.id, subid=fg_sub1.id)
+fg_sub2rta = mycore.AWS_VPC_RTASSOC(client=ec2, rtid=fg_rtab.id, subid=fg_sub2.id)
+
+# Create an Internet Gateway
+fg_igw = mycore.AWS_VPC_IGW(client=ec2, tag=vpc_data["ptags"], vpc_id=fg_vpc.id)
+
+# Route all traffic in the route table towards the Internet Gateway
+fg_route = mycore.AWS_VPC_RTCRT(client=ec2, dst_cidr="0.0.0.0/0", rtid=fg_rtab.id, igw_id=fg_igw.id)
+
+# Create ECS cluster
 fg_ecs = mycore.AWS_ECS(client=ecs, name=vpc_data["ecs_name"])
+
+# Create task definition (task data is read from a file, first parameter, json format)
 fg_tsk_def = mycore.AWS_ECS_TSK_DEF(client=ecs, data=task_data)
 
-
+# Create temporary information needed for running the task
 netconfig_dict = {
                     "awsvpcConfiguration" : {
                         "subnets" : [ fg_sub1.id, fg_sub2.id],
@@ -61,6 +82,7 @@ netconfig_dict = {
                     }
 }
 
+# Finally run the task
 fg_tsk_run = mycore.AWS_ECS_TSK_RUN(client=ecs,
                                         cluster=fg_ecs.arn,
                                         taskDefinition=fg_tsk_def.arn,
